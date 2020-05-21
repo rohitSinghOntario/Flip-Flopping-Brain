@@ -52,7 +52,8 @@ bt = 0.592*t_scale
 bv = 4.85/pot_scale
 
 #external forcing to I_ee (add extra noise here)
-pee = -0.46*t_scale
+#pee = -0.46*t_scale
+pee=-4.1
 
 #all other forcings are zero
 pei = 0*t_scale
@@ -85,7 +86,7 @@ par = np.array([hei,hii,taui,hir,at,av,bt,bv,pee,pei,pie,pii,nbee_emax,te,se,nbi
 #defining initial x (got this from corticalEEGmodel)
 x0_eq = np.array([-1.0368,-1.0200,0.1344,0.0,0.2,0.0,0.1639,0.0,0.2,0.0])
 x0_per = np.array([-0.9598,-0.9305,3.4119,-5.0216,2.9430,-3.5510,3.4414,-5.0216,2.9430,-3.5510])
-x0 = x0_per
+x0 = x0_eq
  
 
 '''
@@ -99,12 +100,12 @@ def F(x,PAR):
     
     #What do S1 and S2 represent?
     S1 = PAR[12]/(1+ np.exp(-np.sqrt(2)*(x[0]-PAR[13])/PAR[14]))
-    S2 = PAR[15]/(1+ np.exp(-np.sqrt(2)*(x[1]-PAR[17])/PAR[17]))
+    S2 = PAR[15]/(1+ np.exp(-np.sqrt(2)*(x[1]-PAR[16])/PAR[17]))
 
     #computing components of F, indexed from 0
-    f0 = -1-x[0]+(PAR[0]-x[0])/np.abs(PAR[0]+1)*x[2]+(PAR[1]-x[0])/np.abs(PAR[1]+1)*x[4]
+    f0 = -1-x[0]+x[2]*(PAR[0]-x[0])/np.abs(PAR[0]+1)+x[4]*(PAR[1]-x[0])/np.abs(PAR[1]+1)
     
-    f1 = PAR[3]-x[1]+(PAR[0]-x[1])/np.abs(PAR[0]-PAR[3])*x[6]+(PAR[1]-x[1])/np.abs(PAR[1]-PAR[3])*x[8]
+    f1 = PAR[3]-x[1]+x[6]*(PAR[0]-x[1])/np.abs(PAR[0]-PAR[3])+x[8]*(PAR[1]-x[1])/np.abs(PAR[1]-PAR[3])
     f1 = f1/PAR[2]
     
     f2 = x[3]
@@ -166,7 +167,7 @@ def EulerMaruyama(X, PAR, n_timesteps, delta, c):
 #testing above code by graphing an x component vs time_list
         
 #calling integrator
-EulerMaruyama(x0, par,10000,0.001,1)
+EulerMaruyama(x0, par,200000,0.002,0.1)
 
 #quick function to get list of all nth components of x, to see how they evolve
 def nth_component(lst,n): 
@@ -179,27 +180,3 @@ plt.plot(t_list, x_component_list)
 plt.xlabel("t")
 plt.ylabel("x_comp")
 plt.show()
-        
-        
-        
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
