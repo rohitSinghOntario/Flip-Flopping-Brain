@@ -3,6 +3,7 @@
 # No output, just produces the frequency plot on a linear and logarithmic scale (the latter to detect power-law decay).
 import matplotlib.pyplot as plt
 import numpy as np
+import Eul_point#iteration
 
 def makeHistogram(z,Nmin):
     # Determine the minimal and maximal values in the data set and the number of data:
@@ -40,4 +41,33 @@ def makeHistogram(z,Nmin):
     plt.loglog(xs,count,'-*')
     plt.show()
     
+    
+      
+#calling integrator
+Eul_point.EulerMaruyama(Eul_point.x0, Eul_point.par,200000,0.001,0.01)
+
+
+ 
+#storing collected dwell times
+he_file = open("dwell_times.txt", "a")
+for time in Eul_point.dwell:
+    he_file.write(str(time))
+    he_file.write("\n")
+he_file.close()
+
+
+#visualizing dwell times with a histogram
+#using accumulated data from textfile
+
+#reading all data from textfile
+he_file = open("dwell_times.txt", "r")
+stringList = he_file.readlines()
+he_file.close()
+
+#converting from strings
+dwell_times = [float(x) for x in stringList]
+
+#plotting dwell time histogram
+makeHistogram(dwell_times, 5)
+
     
