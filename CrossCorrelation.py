@@ -23,19 +23,22 @@ avg = sum(dwell_times)/M
 #data indexed for delay
 k = range(1,M+1)
 
+#computing variance
+var = 0
+for i in range(M):
+    var+=(dwell_times[i]-avg)**2
+
+
 #correlation function
 c = []
 
 for delay in k:
     ck = 0
     for i in range(1,M-delay):
-        ck+=(dwell_times[i]-avg)*(dwell_times[i+delay]-avg)/M
+        ck+=(dwell_times[i]-avg)*(dwell_times[i+delay]-avg)/var
     c.append(ck)
 
 #plotting
 plt.title('dwell correlation')
 plt.plot(k,c)
 plt.show()
-        
-
-
