@@ -133,10 +133,6 @@ def F(x,PAR):
   
 
 
-#lists storing dwell times for base state
-dwell = []
-
-
 #threshold value at which state change is detected (wrt X[0]) 
 #threshold was obtained visually - perhaps theres a better way
 switch = -0.8
@@ -159,6 +155,9 @@ def EulerMaruyama(X, PAR, n_timesteps, delta, c):
     #precomputing as much as possible
     rand = [np.random.normal(0,1) for i in range(n_timesteps)]
     cSqrtDelta = c*np.sqrt(delta)
+    
+    #file storing dwell times
+    he_file = open("dwell_times.txt", "a")
     
     for i in range(n_timesteps):
         
@@ -189,27 +188,15 @@ def EulerMaruyama(X, PAR, n_timesteps, delta, c):
         elif X_0_prev<switch:
             #this conditional is called if X[0]>=switch && prev X[0]<switch
             #therefore a switch is detected
+            
             #store dwell time
-            dwell.append(dwell_time)
+            he_file.write(str(dwell_time))
+            he_file.write("\n")
+            
             #reset dwell time
             dwell_time = 0
             
+     
+    he_file.close()
     #returning h_e
     return [element[0] for element in x_list] 
-       
-        
-
-        
-        
-
-
-
-
-
-
-
-
-
-
-
-
