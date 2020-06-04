@@ -42,19 +42,7 @@ def makeHistogram(z,Nmin):
     plt.show()
     
     
-      
-#calling integrator
-Eul_point.EulerMaruyama(Eul_point.x0, Eul_point.par,200000,0.001,0.01)
-
-
- 
-#storing collected dwell times
-he_file = open("dwell_times.txt", "a")
-for time in Eul_point.dwell:
-    he_file.write(str(time))
-    he_file.write("\n")
-he_file.close()
-
+     
 
 #visualizing dwell times with a histogram
 #using accumulated data from textfile
