@@ -1,11 +1,10 @@
 """
-Purpose: To determine nature of dwell times (exponential or algebraic)
-  
+Euler Maruyama iteration, point renewal process
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
-import HistogramBinCode
+
 
 #Initializing parameters
 
@@ -202,63 +201,6 @@ def EulerMaruyama(X, PAR, n_timesteps, delta, c):
 
         
         
-
-        
-#calling integrator
-EulerMaruyama(x0, par,200000,0.001,0.01)
-
-
- 
-#storing collected dwell times
-he_file = open("dwell_times.txt", "a")
-for time in dwell:
-    he_file.write(str(time))
-    he_file.write("\n")
-he_file.close()
-
-
-#visualizing dwell times with a histogram
-#using accumulated data from textfile
-
-#reading all data from textfile
-he_file = open("dwell_times.txt", "r")
-stringList = he_file.readlines()
-he_file.close()
-
-#converting from strings
-dwell_times = [float(x) for x in stringList]
-
-#plotting dwell time histogram
-HistogramBinCode.makeHistogram(dwell_times, 5)
-
-
-
-
-
-#now: create power spectrum 
-delta = 0.001 # time step
-c = 0.01          # noise level
-ntrial = 10    # nr of spectra to average over (the spectrum is a random variable)
-nt = 200000
-spec = np.zeros((nt//2+1))  # pre-allocate the spectrum array (frequencies 0 up to nt/2)
-
-
-for i in range(ntrial): # loop over trials
-    print("Starting trial %d..." % (i))
-    out = EulerMaruyama(x0, par,nt,delta,c)  # time-step
-    dum = np.reshape(out,(nt))                       # for some reason, fft input should be of shape (nt) not (nt,1)
-    dum = np.fft.fft(dum)                                  # compute fft
-    spec += np.abs(dum[0:nt//2+1])**2       # add for averaging
-spec /= ntrial                                                   # divide by nr of trials
-freq = np.arange(nt//2+1) / (nt * delta * (t_scale/1000.))  # compute the frequency in Hz from the discrete frequency
-plt.loglog(freq,spec)
-plt.show()
-
-File = open("spectrum","a")
-for i in range(nt//2+1):
-    File.write(("%f  %f") % (freq[i],spec[i]))
-    File.write("\n")
-
 
 
 
