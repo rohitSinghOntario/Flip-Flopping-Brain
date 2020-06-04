@@ -1,16 +1,11 @@
 """
 Purpose: To determine nature of dwell times (exponential or algebraic)
   
-1. compute F(x,paramters) 
-2. form euler maruyama iteration
-    -play around with c value so that we get a reasonable frequency of transitions
-    - detect whether x is in state A or state B with a boolean 
-    - store dwell times for state A & B
-    - with lots of data (transitions) - we wish to see if the tails are algebraic(fat) or exponential
 """
-import scipy
+
 import numpy as np
 import matplotlib.pyplot as plt
+import HistogramBinCode
 
 #Initializing parameters
 
@@ -87,6 +82,16 @@ x0_per = np.array([-0.9598,-0.9305,3.4119,-5.0216,2.9430,-3.5510,3.4414,-5.0216,
 x0 = x0_eq
  
 
+#precomputing constants for F where possible
+sqrt2 = np.sqrt(2)
+f0_cons1 = np.abs(par[0]+1)#f0, constant 1
+f0_cons2 = np.abs(par[1]+1)
+
+f1_cons1 = np.abs(par[0]-par[3])
+f1_cons2 = np.abs(par[1]-par[3])
+
+
+
 '''
 #function computes F(x,u)
 #returns F array with 10 components
@@ -97,13 +102,13 @@ def F(x,PAR):
     E = np.exp(1)
     
     #What do S1 and S2 represent?
-    S1 = PAR[12]/(1+ np.exp(-np.sqrt(2)*(x[0]-PAR[13])/PAR[14]))
-    S2 = PAR[15]/(1+ np.exp(-np.sqrt(2)*(x[1]-PAR[16])/PAR[17]))
+    S1 = PAR[12]/(1+ np.exp(-sqrt2*(x[0]-PAR[13])/PAR[14]))
+    S2 = PAR[15]/(1+ np.exp(-sqrt2*(x[1]-PAR[16])/PAR[17]))
 
     #computing components of F, indexed from 0
-    f0 = -1-x[0]+x[2]*(PAR[0]-x[0])/np.abs(PAR[0]+1)+x[4]*(PAR[1]-x[0])/np.abs(PAR[1]+1)
+    f0 = -1-x[0]+x[2]*(PAR[0]-x[0])/f0_cons1+x[4]*(PAR[1]-x[0])/f0_cons2
     
-    f1 = PAR[3]-x[1]+x[6]*(PAR[0]-x[1])/np.abs(PAR[0]-PAR[3])+x[8]*(PAR[1]-x[1])/np.abs(PAR[1]-PAR[3])
+    f1 = PAR[3]-x[1]+x[6]*(PAR[0]-x[1])/f1_cons1+x[8]*(PAR[1]-x[1])/f1_cons2
     f1 = f1/PAR[2]
     
     f2 = x[3]
@@ -129,21 +134,32 @@ def F(x,PAR):
   
 
 
-#lists storing dwell times for states A nad B
-A_dwell = []
-B_dwell = []
+#lists storing dwell times for base state
+dwell = []
 
-#value at which state change is detected (wrt X[0]) 
-#this value was obtained visually - perhaps theres a better way
+
+#threshold value at which state change is detected (wrt X[0]) 
+#threshold was obtained visually - perhaps theres a better way
 switch = -0.8
+
+
 '''
 Euler Maruyama Integrator
-Takes in: initial state: X, parameters: PAR, 
+IN: initial state: X, parameters: PAR, 
 number of time steps: n_timesteps, step size: delta, noise intensity: c
+
+OUT:h_e list
 '''
 def EulerMaruyama(X, PAR, n_timesteps, delta, c):
+    #list storing all X
+    x_list = []
+    
     #to update dwell times before storing
     dwell_time = 0
+    
+    #precomputing as much as possible
+    rand = [np.random.normal(0,1) for i in range(n_timesteps)]
+    cSqrtDelta = c*np.sqrt(delta)
     
     for i in range(n_timesteps):
         
@@ -153,79 +169,105 @@ def EulerMaruyama(X, PAR, n_timesteps, delta, c):
         
         #computing F
         f = F(X,PAR)
-        #drawing random variable from normal distribution
-        w = np.random.normal(0,1)
+        
         #updating x
-        X = X + delta*f + c*np.sqrt(delta)*w
+        X = X + delta*f + cSqrtDelta*rand[i]
+        
+        #building x list
+        x_list.append(X)
         
         
-       
+        
     
-        #identifying switches and updating/storing dwell times
+        #identifying state changes & updating/storing dwell times
         
-        #if in state A:
+        #one dwell time = the time between consecutive 'shots up'
+        #must identify shots up - then store current dwell time and reset
+        
         if X[0]<switch:
+            #at base level, so update dwell time
+            dwell_time += delta
+        elif X_0_prev<switch:
+            #this conditional is called if X[0]>=switch && prev X[0]<switch
+            #therefore a switch is detected
+            #store dwell time
+            dwell.append(dwell_time)
+            #reset dwell time
+            dwell_time = 0
             
-            #detecting if switch occured by checking previous value for X[0]
-            if X_0_prev >=switch:
-                #store dwell time for state B
-                B_dwell.append(dwell_time)
-                #reset dwell_time
-                dwell_time = 0
-        else:#this is state B
-            #detecting if switch occured
-            if X_0_prev <=switch:
-                #store dwell time for state A
-                A_dwell.append(dwell_time)
-                #reset dwell_time
-                dwell_time = 0
-        #update dwell time
-        dwell_time += delta
-        
+    #returning h_e
+    return [element[0] for element in x_list] 
+       
         
 
+        
+        
 
         
 #calling integrator
-EulerMaruyama(x0, par,2000000,0.001,0.01)
+EulerMaruyama(x0, par,200000,0.001,0.01)
+
+
+ 
+#storing collected dwell times
+he_file = open("dwell_times.txt", "a")
+for time in dwell:
+    he_file.write(str(time))
+    he_file.write("\n")
+he_file.close()
 
 
 #visualizing dwell times with a histogram
+#using accumulated data from textfile
 
-plt.hist(A_dwell, bins = len(A_dwell))
-plt.title("A dwell times")
-plt.xlabel("time")
-plt.ylabel("frequency")
+#reading all data from textfile
+he_file = open("dwell_times.txt", "r")
+stringList = he_file.readlines()
+he_file.close()
+
+#converting from strings
+dwell_times = [float(x) for x in stringList]
+
+#plotting dwell time histogram
+HistogramBinCode.makeHistogram(dwell_times, 5)
+
+
+
+
+
+#now: create power spectrum 
+delta = 0.001 # time step
+c = 0.01          # noise level
+ntrial = 10    # nr of spectra to average over (the spectrum is a random variable)
+nt = 200000
+spec = np.zeros((nt//2+1))  # pre-allocate the spectrum array (frequencies 0 up to nt/2)
+
+
+for i in range(ntrial): # loop over trials
+    print("Starting trial %d..." % (i))
+    out = EulerMaruyama(x0, par,nt,delta,c)  # time-step
+    dum = np.reshape(out,(nt))                       # for some reason, fft input should be of shape (nt) not (nt,1)
+    dum = np.fft.fft(dum)                                  # compute fft
+    spec += np.abs(dum[0:nt//2+1])**2       # add for averaging
+spec /= ntrial                                                   # divide by nr of trials
+freq = np.arange(nt//2+1) / (nt * delta * (t_scale/1000.))  # compute the frequency in Hz from the discrete frequency
+plt.loglog(freq,spec)
 plt.show()
 
-plt.hist(B_dwell, bins = len(B_dwell))
-plt.title("B dwell times")
-plt.xlabel("time")
-plt.ylabel("frequency")
-plt.show()
+File = open("spectrum","a")
+for i in range(nt//2+1):
+    File.write(("%f  %f") % (freq[i],spec[i]))
+    File.write("\n")
 
 
 
-        
-        
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
+
+
+
+
+
+
+
+
+
+
