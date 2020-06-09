@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 #now: create power spectrum 
 
 delta = 0.001 # time step
-c = 0.01          # noise level
+c = 0.1          # noise level
 ntrial = 10    # nr of spectra to average over (the spectrum is a random variable)
 nt = 20000
 spec = np.zeros((nt//2+1))  # pre-allocate the spectrum array (frequencies 0 up to nt/2)
@@ -22,8 +22,9 @@ for i in range(ntrial): # loop over trials
 spec /= ntrial                                                   # divide by nr of trials
 freq = np.arange(nt//2+1) / (nt * delta * (Eul_point.t_scale/1000.))  # compute the frequency in Hz from the discrete frequency
 plt.loglog(freq,spec)
-plt.show()
 
+plt.show()
+plt.xlim(0, 100)#to see behaviour in desired region
 File = open("spectrum","a")
 for i in range(nt//2+1):
     File.write(("%f  %f") % (freq[i],spec[i]))
