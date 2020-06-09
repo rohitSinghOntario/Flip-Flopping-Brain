@@ -155,6 +155,7 @@ def EulerMaruyama(X, PAR, n_timesteps, delta, c):
     #precomputing as much as possible
     rand = [np.random.normal(0,1) for i in range(n_timesteps)]
     cSqrtDelta = c*np.sqrt(delta)
+    rand_adjust = np.array([0,0,0,1,0,0,0,0,0,0])#only I_ee needs perturbation
     
     #file storing dwell times
     he_file = open("dwell_times.txt", "a")
@@ -169,7 +170,7 @@ def EulerMaruyama(X, PAR, n_timesteps, delta, c):
         f = F(X,PAR)
         
         #updating x
-        X = X + delta*f + cSqrtDelta*rand[i]
+        X = X + delta*f + cSqrtDelta*rand[i]*rand_adjust
         
         #building x list
         x_list.append(X)
