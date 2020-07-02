@@ -1,4 +1,5 @@
 
+
 """
 
 Simple burst model
@@ -72,12 +73,39 @@ def generateBursts(step, delta, Del, rho, T):
 ###
 #testing
 X = generateBursts(0.001,1,10,rho,1000)
-plt.title('Bursts')
+plt.title('Test')
 plt.plot(np.linspace(0,1000,len(X)), X)
 plt.show()
 ###
 
+
+
 #now compute power spectrum
+
+
+step = 0.001 # time step
+ntrial = 100    # nr of spectra to average over (the spectrum is a random variable)
+delta = 1 #duration of burst
+Del = 10 #seperation of bursts (without 0s)
+T = 1000 #duration of simulation
+xlen = int(T/step)
+spec = np.zeros((xlen//2+1))  # pre-allocate the spectrum array (frequencies 0 up to xlen/2)
+
+
+for i in range(ntrial): # loop over trials
+    print("Starting trial %d..." % (i))
+    out = generateBursts(step,delta,Del,rho,T)
+    out = out[:xlen]
+    dum = np.reshape(out,(xlen))# reshaping for fft input 
+    dum = np.fft.fft(dum) # compute fft
+    spec += np.abs(dum[0:xlen//2+1])**2 # add fft, to be averaged
+spec /= ntrial   # divide by # of trials
+freq = np.arange(xlen//2+1) / (xlen * step * (9/1000.))  # compute the frequency in Hz from the discrete frequency
+plt.loglog(freq,spec)
+for m in range(11):  
+    plt.axvline(x=m*(Del+delta))#vertical lines where maxes are expected
+plt.xlim(0, 100)
+plt.show()
 
 
 
